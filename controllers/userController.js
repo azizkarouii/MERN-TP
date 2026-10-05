@@ -1,29 +1,34 @@
+const { estNonVide, estEmailValide } = require('../utils/validators');
+
 const users = [
 	{
 		id: 1,
 		name: "Aziz",
-		email: "aziz@gmail.com"
+		email: "aziz@gmail.com",
+		role: "responsable"
 	},
 	{
 		id: 2,
 		name: "jegham",
-		email: "jegham@gmail.com"
+		email: "jegham@gmail.com",
+		role: "etudiant"
 	},
 	{
 		id: 3,
 		name: "louay",
-		email: "louay@gmail.com"
+		email: "louay@gmail.com",
+		role: "etudiant"
 	}
 ];
 let prochainId = 4;
 
 const getAllUsers = (req, res) => {
-	const { name } = req.query;
+	const { role } = req.query;
 
 	let resultat = users;
 
-	if (name) {
-		resultat = users.filter(user => user.name === name);
+	if (role) {
+		resultat = users.filter(user => user.role === role);
 	}
 
 	res.json({
@@ -47,18 +52,31 @@ const getUserById = (req, res) => {
 };
 
 const createUser = (req, res) => {
-	const { name, email } = req.body;
+	const { name, email, role } = req.body;
 
-	if (!name || !email) {
+	if (!estNonVide(name)) {
 		return res.status(400).json({
-			error: "Le nom et l'email sont obligatoires"
+			error: "Le nom est obligatoire et ne peut pas être vide"
+		});
+	}
+
+	if (!estEmailValide(email)) {
+		return res.status(400).json({
+			error: "L'email est invalide. Il doit contenir @ et un point ."
+		});
+	}
+
+	if (!role) {
+		return res.status(400).json({
+			error: "Le role est obligatoire"
 		});
 	}
 
 	const nouvelUtilisateur = {
 		id: prochainId,
 		name,
-		email
+		email,
+		role
 	};
 
 	prochainId += 1;
