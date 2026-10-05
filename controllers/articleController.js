@@ -100,9 +100,29 @@ const updateArticle = (req, res) => {
         article: articles[index]
     });
 };
+
+const deleteArticle = (req, res) => {
+    const id = Number(req.params.id);
+    const index = articles.findIndex(article => article.id === id);
+
+    if (index === -1) {
+        return res.status(404).json({
+            error: `Article ${id} introuvable`
+        });
+    }
+
+    const articleSupprime = articles.splice(index, 1)[0];
+
+    res.status(200).json({
+        message: "Article supprimé",
+        article: articleSupprime
+    });
+};
+
 module.exports = {
     getAllArticles,
     getArticleById,
     createArticle,
-    updateArticle
+    updateArticle,
+    deleteArticle
 };
