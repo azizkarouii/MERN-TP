@@ -25,6 +25,16 @@ const userSchema = new mongoose.Schema(
             min: [4, "L'âge minimum autorisé est de 4 ans"]
         },
 
+        bio: {
+            type: String,
+            maxlength: [200, 'La biographie ne peut pas dépasser 200 caractères']
+        },
+
+        phone: {
+            type: String,
+            match: [/^\d{8}$/, 'Numéro de 8 chiffres requis']
+        },
+
         role: {
             type: String,
             enum: {

@@ -1,3 +1,4 @@
+const Article = require('../models/articleModel');
 const User = require('../models/userModel');
 
 // 1. Obtenir tous les utilisateurs (GET /api/users)
@@ -23,6 +24,12 @@ const getUserById = async (req, res) => {
 
         res.status(200).json(user);
     } catch (err) {
+        if (err.name === 'CastError') {
+            return res.status(400).json({
+                message: 'Identifiant de ressource invalide (format ObjectId attendu)'
+            });
+        }
+
         res.status(500).json({ message: err.message });
     }
 };
@@ -57,6 +64,14 @@ const createUser = async (req, res) => {
 // 4. Supprimer un utilisateur (DELETE /api/users/:id)
 const deleteUser = async (req, res) => {
     try {
+        const hasArticles = await Article.findOne({ author: req.params.id });
+
+        if (hasArticles) {
+            return res.status(400).json({
+                message: 'Impossible de supprimer un utilisateur ayant des articles publies'
+            });
+        }
+
         const user = await User.findByIdAndDelete(req.params.id);
 
         if (!user) {
@@ -70,6 +85,12 @@ const deleteUser = async (req, res) => {
             id: req.params.id
         });
     } catch (err) {
+        if (err.name === 'CastError') {
+            return res.status(400).json({
+                message: 'Identifiant de ressource invalide (format ObjectId attendu)'
+            });
+        }
+
         res.status(500).json({ message: err.message });
     }
 };
