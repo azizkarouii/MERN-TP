@@ -1,116 +1,83 @@
-const { estNonVide, estEmailValide } = require('../utils/validators');
+const User = require('../models/userModel');
 
-const users = [
-	{
-		id: 1,
-		name: "Aziz",
-		email: "aziz@gmail.com",
-		role: "responsable"
-	},
-	{
-		id: 2,
-		name: "jegham",
-		email: "jegham@gmail.com",
-		role: "etudiant"
-	},
-	{
-		id: 3,
-		name: "louay",
-		email: "louay@gmail.com",
-		role: "etudiant"
-	}
-];
-let prochainId = 4;
-
-const getAllUsers = (req, res) => {
-	const { role } = req.query;
-
-	let resultat = users;
-
-	if (role) {
-		resultat = users.filter(user => user.role === role);
-	}
-
-	res.json({
-		total: resultat.length,
-		users: resultat
-	});
+// 1. Obtenir tous les utilisateurs (GET /api/users)
+const getAllUsers = async (req, res) => {
+    try {
+        const users = await User.find();
+        res.status(200).json(users);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
 };
 
-const getUserById = (req, res) => {
-	const id = Number(req.params.id);
+// 2. Obtenir un utilisateur par son ID (GET /api/users/:id)
+const getUserById = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
 
-	const user = users.find(u => u.id === id);
+        if (!user) {
+            return res.status(404).json({
+                message: 'Utilisateur non trouvé'
+            });
+        }
 
-	if (!user) {
-		return res.status(404).json({
-			error: `Utilisateur ${id} introuvable`
-		});
-	}
-
-	res.status(200).json(user);
+        res.status(200).json(user);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
 };
 
-const createUser = (req, res) => {
-	const { name, email, role } = req.body;
+// 3. Créer un nouvel utilisateur (POST /api/users)
+const createUser = async (req, res) => {
+    try {
+        const { name, email, age, role } = req.body;
 
-	if (!estNonVide(name)) {
-		return res.status(400).json({
-			error: "Le nom est obligatoire et ne peut pas être vide"
-		});
-	}
+        if (!name || !email) {
+            return res.status(400).json({
+                message: "Le nom et l'email sont requis"
+            });
+        }
 
-	if (!estEmailValide(email)) {
-		return res.status(400).json({
-			error: "L'email est invalide. Il doit contenir @ et un point ."
-		});
-	}
+        const exists = await User.findOne({ email });
 
-	if (!role) {
-		return res.status(400).json({
-			error: "Le role est obligatoire"
-		});
-	}
+        if (exists) {
+            return res.status(409).json({
+                message: 'Cet email est déjà utilisé'
+            });
+        }
 
-	const nouvelUtilisateur = {
-		id: prochainId,
-		name,
-		email,
-		role
-	};
+        const user = await User.create({ name, email, age, role });
 
-	prochainId += 1;
-	users.push(nouvelUtilisateur);
-
-	res.status(201).json({
-		message: "Utilisateur créé",
-		user: nouvelUtilisateur
-	});
+        res.status(201).json(user);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
 };
 
-const deleteUser = (req, res) => {
-	const id = Number(req.params.id);
-	const index = users.findIndex(user => user.id === id);
+// 4. Supprimer un utilisateur (DELETE /api/users/:id)
+const deleteUser = async (req, res) => {
+    try {
+        const user = await User.findByIdAndDelete(req.params.id);
 
-	if (index === -1) {
-		return res.status(404).json({
-			error: `Utilisateur ${id} introuvable`
-		});
-	}
+        if (!user) {
+            return res.status(404).json({
+                message: 'Utilisateur non trouvé'
+            });
+        }
 
-	const utilisateurSupprime = users.splice(index, 1)[0];
-
-	res.status(200).json({
-		message: "Utilisateur supprimé",
-		user: utilisateurSupprime
-	});
+        res.status(200).json({
+            message: 'Utilisateur supprimé avec succès',
+            id: req.params.id
+        });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
 };
-
-
 
 module.exports = {
-	getAllUsers,
-	getUserById,
-	createUser,
-	deleteUser
+    getAllUsers,
+    getUserById,
+    createUser,
+    deleteUser
 };
+
