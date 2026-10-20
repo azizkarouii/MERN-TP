@@ -13,7 +13,7 @@ const generateToken = (id, role) => {
 // POST /api/users/register (Inscription)
 const registerUser = async (req, res) => {
     try {
-        const { name, email, password, age, role } = req.body;
+        const { name, email, password, age } = req.body;
 
         if (!name || !email || !password) {
             return res.status(400).json({
@@ -38,7 +38,7 @@ const registerUser = async (req, res) => {
             email,
             password: hashedPassword,
             age,
-            role
+            role: 'user'
         });
 
         res.status(201).json({
@@ -214,6 +214,81 @@ const deleteUser = async (req, res) => {
     }
 };
 
+// 5. Mettre a jour le mot de passe de l'utilisateur connecte (PUT /api/users/update-password)
+const updatePassword = async (req, res) => {
+    try {
+        const { oldPassword, newPassword } = req.body;
+
+        if (!oldPassword || !newPassword) {
+            return res.status(400).json({
+                message: 'oldPassword et newPassword sont requis'
+            });
+        }
+
+        const user = await User.findById(req.user._id);
+
+        if (!user) {
+            return res.status(404).json({
+                message: 'Utilisateur non trouvé'
+            });
+        }
+
+        const isOldPasswordValid = await bcrypt.compare(oldPassword, user.password);
+
+        if (!isOldPasswordValid) {
+            return res.status(401).json({
+                message: 'Ancien mot de passe incorrect'
+            });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        user.password = hashedPassword;
+        await user.save();
+
+        res.status(200).json({
+            message: 'Mot de passe mis a jour avec succes'
+        });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// 6. Promouvoir un utilisateur au role admin (PUT /api/users/:id/role)
+const promoteUserToAdmin = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+
+        if (!user) {
+            return res.status(404).json({
+                message: 'Utilisateur non trouvé'
+            });
+        }
+
+        user.role = 'admin';
+        await user.save();
+
+        res.status(200).json({
+            message: 'Role admin attribue avec succes',
+            user: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role
+            }
+        });
+    } catch (err) {
+        if (err.name === 'CastError') {
+            return res.status(400).json({
+                message: 'Identifiant de ressource invalide (format ObjectId attendu)'
+            });
+        }
+
+        res.status(500).json({ message: err.message });
+    }
+};
+
 module.exports = {
     registerUser,
     loginUser,
@@ -221,6 +296,8 @@ module.exports = {
     getAllUsers,
     getUserById,
     createUser,
-    deleteUser
+    deleteUser,
+    updatePassword,
+    promoteUserToAdmin
 };
 

@@ -6,6 +6,7 @@ const { protect } = require('../middlewares/authMiddleware');
 
 // Consultation publique
 router.get('/', ArticleController.getAllArticles);
+router.get('/my-articles', protect, ArticleController.getMyArticles);
 router.get('/:id', ArticleController.getArticleById);
 
 // Operations d'ecriture protegees par authentification JWT

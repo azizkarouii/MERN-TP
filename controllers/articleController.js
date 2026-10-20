@@ -37,6 +37,18 @@ const getArticleById = async (req, res) => {
     }
 };
 
+// 2.b Obtenir les articles de l'utilisateur connecte (GET /api/articles/my-articles)
+const getMyArticles = async (req, res) => {
+    try {
+        const articles = await Article.find({ author: req.user._id })
+            .populate('author', 'name email');
+
+        res.status(200).json(articles);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
 // 3. Créer un nouvel article (POST /api/articles)
 const createArticle = async (req, res) => {
     try {
@@ -122,6 +134,7 @@ const deleteArticle = async (req, res) => {
 module.exports = {
     getAllArticles,
     getArticleById,
+    getMyArticles,
     createArticle,
     updateArticle,
     deleteArticle
